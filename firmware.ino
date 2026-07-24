@@ -11,8 +11,8 @@
 // ==========================================
 // CONFIGURATION (Adjust these as needed)
 // ==========================================
-#define WIFI_SSID "DARLING"
-#define WIFI_PASSWORD "12345678"
+#define WIFI_SSID "Freshpod"
+#define WIFI_PASSWORD "passw0rd"
 
 // Machine ID & Backend Config
 #define MACHINE_ID "FP_MACHINE_01"
