@@ -16,7 +16,7 @@
 
 // Machine ID & Backend Config
 #define MACHINE_ID "FP_MACHINE_01"
-#define BACKEND_API_URL "https://www.coreblock.in/api/payment/create"
+#define BACKEND_API_URL "https://www.hanish.coreblock.in/api/payment/create"
 #define QR_AMOUNT 69.0f      // Payment amount in INR
 #define QR_TIMEOUT_MS 180000 // 3 minutes timeout for scanning QR code
 
