@@ -13,19 +13,19 @@
 #define DGUS_VP_QR_CONTENT    0x5100  // <-- NEW: bind your QR Code control to this VP
 
 // Page indices
-#define PAGE_QR_CODE               0
-#define PAGE_CLEANING_STARTED      1
-#define PAGE_UV_STERILIZATION      2
-#define PAGE_DOOR_UNLOCKED         3
-#define PAGE_HELMET_DISINFECTION   4
-#define PAGE_TAKE_HELMET           5
-#define PAGE_PAYMENT_SUCCESS       6
-#define PAGE_CLOSE_DOOR            7
-#define PAGE_THANK_YOU             8
-#define PAGE_DUST_REMOVAL          9
-#define PAGE_DRY_HELMET           10
-#define PAGE_SANITIZING           11
-#define PAGE_WELCOME              12
+#define PAGE_WELCOME               0
+#define PAGE_QR_CODE               1
+#define PAGE_CLEANING_STARTED      2
+#define PAGE_UV_STERILIZATION      3
+#define PAGE_DOOR_UNLOCKED         4
+#define PAGE_HELMET_DISINFECTION   5
+#define PAGE_TAKE_HELMET           6
+#define PAGE_PAYMENT_SUCCESS       7
+#define PAGE_CLOSE_DOOR            8
+#define PAGE_THANK_YOU             9
+#define PAGE_DUST_REMOVAL          10
+#define PAGE_DRY_HELMET           11
+#define PAGE_SANITIZING           12
 
 // Color definitions (16-bit RGB565)
 #define COLOR_WHITE 0xFFFF

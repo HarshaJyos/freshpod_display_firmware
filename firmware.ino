@@ -16,7 +16,7 @@
 
 // Machine ID & Backend Config
 #define MACHINE_ID "FP_MACHINE_01"
-#define BACKEND_API_URL "https://www.hanish.coreblock.in/api/payment/create"
+#define BACKEND_API_URL "https://www.coreblock.in/api/payment/create"
 #define QR_AMOUNT 69.0f      // Payment amount in INR
 #define QR_TIMEOUT_MS 180000 // 3 minutes timeout for scanning QR code
 
@@ -98,7 +98,7 @@ void setup() {
   dgusInit(dwinSerialPort, DWIN_RX_PIN, DWIN_TX_PIN, 115200);
   delay(100);
   dgusShowPage(
-      12); // Show Screen 12 (Welcome/Calibration screen) during initialization
+      PAGE_WELCOME); // Show Welcome screen during initialization
   delay(100);
 
   // Initialize DFPlayer
@@ -201,7 +201,6 @@ void loop() {
       pollPaymentStatus();
     }
 
-
     break;
 
   case STATE_CLEANING:
@@ -211,13 +210,15 @@ void loop() {
     // Route state machine directly based on prefetch success
     stateTimer = millis();
     if (qrPrefetched) {
-      Serial.println("[LOOP] QR was pre-drawn successfully. Entering STATE_WAIT_FOR_PAYMENT directly.");
+      Serial.println("[LOOP] QR was pre-drawn successfully. Entering "
+                     "STATE_WAIT_FOR_PAYMENT directly.");
       qrPrefetched = false; // Consume/reset prefetch flag
       paymentSuccessReceived = false;
       lastPollingTime = millis();
       currentState = STATE_WAIT_FOR_PAYMENT;
     } else {
-      Serial.println("[LOOP] QR prefetch failed. Fallback to requesting payment synchronously.");
+      Serial.println("[LOOP] QR prefetch failed. Fallback to requesting "
+                     "payment synchronously.");
       currentState = STATE_REQUEST_PAYMENT;
     }
     break;
@@ -497,7 +498,8 @@ void startCleaningProcess() {
   Serial.println("[PREFETCH] Prefetching next payment link from backend...");
   if (requestNewPayment()) {
     qrPrefetched = true;
-    Serial.println("[PREFETCH] Success! QR code prefetched. Pre-drawing onto Page 0...");
+    Serial.println(
+        "[PREFETCH] Success! QR code prefetched. Pre-drawing onto Page 0...");
     // Clear and draw the QR code on Page 0 in the background!
     dgusClearQrArea();
     drawQRCode(currentUpiIntent.c_str());
