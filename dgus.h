@@ -9,7 +9,8 @@
 
 // DWIN DGUS Variable Pointers (VP)
 #define DGUS_VP_PAGE_SWITCH   0x0084
-#define DGUS_VP_GRAPHICS      0x5000  // VP address assigned to Basic Graphic control
+#define DGUS_VP_GRAPHICS      0x5000  // kept for any future graphic use
+#define DGUS_VP_QR_CONTENT    0x5100  // <-- NEW: bind your QR Code control to this VP
 
 // Page indices
 #define PAGE_QR_CODE               0
@@ -45,13 +46,18 @@ void dgusInit(HardwareSerial &serial, int rxPin, int txPin, long baudRate = 1152
 // Switch DWIN page
 void dgusShowPage(uint8_t pageIndex);
 
-// Clear the QR drawing area (fills the 250x250 region at X:275, Y:115 with White)
+// Clear the QR drawing area (fills the 250x250 region with White) – kept for compatibility
 void dgusClearQrArea();
 
-// Draw a single filled rectangle on DWIN (immediate draw)
+// Draw a single filled rectangle on DWIN (immediate draw) – kept
 void dgusDrawFilledRect(uint16_t xs, uint16_t ys, uint16_t xe, uint16_t ye, uint16_t color);
 
-// Draw multiple filled rectangles on DWIN using RAM buffering for persistent multi-shape drawing
+// Draw multiple filled rectangles – kept
 void dgusDrawRects(const DGUSRect *rects, uint16_t count);
+
+// ========== NEW: Native QR Code control ==========
+// Write a text string (Razorpay short_url) to the QR VP.
+// The DWIN T5L will generate the QR code itself.
+void dgusSetQrContent(const char *text);
 
 #endif // DGUS_H

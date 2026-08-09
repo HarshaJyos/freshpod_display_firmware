@@ -118,3 +118,34 @@ void dgusDrawRects(const DGUSRect *rects, uint16_t count) {
   dwinSerial->write(headerCmd, sizeof(headerCmd));
   dwinSerial->flush();
 }
+
+// ============================================================
+// NEW: Write string to native QR Code control
+// ============================================================
+void dgusSetQrContent(const char *text) {
+  if (dwinSerial == NULL || text == NULL) return;
+
+  size_t len = strlen(text);
+  if (len == 0 || len > 450) return;          // safety limit (DGUS supports up to ~458 bytes)
+
+  // Frame: 5A A5 | Length | 82 | VP_H VP_L | ASCII data... | FF FF
+  // Length = 1 (cmd) + 2 (VP) + len + 2 (terminator)
+  uint8_t payloadLen = 3 + len + 2;
+
+  dwinSerial->write(0x5A);
+  dwinSerial->write(0xA5);
+  dwinSerial->write(payloadLen);
+  dwinSerial->write(DGUS_CMD_WRITE_VAR);               // 0x82
+  dwinSerial->write((uint8_t)(DGUS_VP_QR_CONTENT >> 8));
+  dwinSerial->write((uint8_t)(DGUS_VP_QR_CONTENT & 0xFF));
+
+  // Write the actual string
+  dwinSerial->write((const uint8_t *)text, len);
+
+  // Terminator required by DGUS QR control
+  dwinSerial->write(0xFF);
+  dwinSerial->write(0xFF);
+
+  dwinSerial->flush();
+}
+
