@@ -128,31 +128,25 @@ void dgusSetQrContent(const char *text) {
   }
 
   size_t len = strlen(text);
-  if (len > 450) return;          // safety limit (DGUS supports up to ~458 bytes)
+  if (len > 120) return; // safety limit
 
-  // Determine padding/terminator length to ensure even byte count for 16-bit VP memory.
-  // If len is even, we append 0x00 0x00 (2 bytes).
-  // If len is odd, we append 0x00 (1 byte).
-  uint8_t termLen = (len % 2 == 0) ? 2 : 1;
-  uint8_t payloadLen = 3 + len + termLen;
+  // We will write a fixed 120 bytes (60 words) to clear any previous data
+  uint8_t buffer[120];
+  memset(buffer, 0, sizeof(buffer));
+  if (len > 0) {
+    memcpy(buffer, text, len);
+  }
+
+  uint8_t payloadLen = 3 + 120; // 123 bytes follow length byte
 
   dwinSerial->write(0x5A);
   dwinSerial->write(0xA5);
   dwinSerial->write(payloadLen);
-  dwinSerial->write(DGUS_CMD_WRITE_VAR);               // 0x82
+  dwinSerial->write(DGUS_CMD_WRITE_VAR);
   dwinSerial->write((uint8_t)(DGUS_VP_QR_CONTENT >> 8));
   dwinSerial->write((uint8_t)(DGUS_VP_QR_CONTENT & 0xFF));
 
-  // Write the actual string
-  if (len > 0) {
-    dwinSerial->write((const uint8_t *)text, len);
-  }
-
-  // Write null terminator (1 or 2 bytes) to align to 16-bit words
-  for (uint8_t i = 0; i < termLen; i++) {
-    dwinSerial->write(0x00);
-  }
-
+  dwinSerial->write(buffer, sizeof(buffer));
   dwinSerial->flush();
 }
 
