@@ -6,7 +6,7 @@
 #include <WiFiClientSecure.h>
 
 #include "dgus.h"
-// #include "qrcode.h"
+#include "qrcode.h"
 
 // ==========================================
 // CONFIGURATION (Adjust these as needed)
@@ -225,23 +225,84 @@ void loop() {
   }
 }
 
-// Draw the QR Code using DWIN native QR control (instant)
+// Draw the QR Code using manual geometric rectangle drawing
 void drawQRCode(const char *text) {
   if (text == NULL || strlen(text) == 0) {
     Serial.println("[ERROR] Empty QR text");
     return;
   }
 
-  Serial.print("[QR] Sending to native QR control: ");
+  QRCode qrcode;
+  uint8_t qrcodeData[qrcode_getBufferSize(4)];
+
+  Serial.print("[QR] Drawing manual QR code for: ");
   Serial.println(text);
 
-  // Optional: clear old graphic area if you still have a white box
-  // dgusClearQrArea();          // you can keep or remove this line
+  int result = qrcode_initText(&qrcode, qrcodeData, 4, ECC_LOW, text);
+  if (result != 0) {
+    Serial.println("[ERROR] QR generation failed (text too long or version mismatch).");
+    return;
+  }
 
-  // Send the string – T5L generates the QR itself
-  dgusSetQrContent(text);
+  // Placement math inside the 200x200 white box at X: 312, Y: 182
+  // Size = 33 * 5 = 165 pixels. Margin = (200 - 165) / 2 = 17 pixels.
+  // Drawing starts at X = 312 + 17 = 329, Y = 182 + 17 = 199
+  uint16_t startX = 329;
+  uint16_t startY = 199;
+  uint16_t moduleSize = 5;
 
-  Serial.println("[QR] Native QR update completed.");
+  // Stack buffer to accumulate drawing data
+  static DGUSRect spansBuffer[300];
+  uint16_t spanCount = 0;
+
+  for (uint8_t y = 0; y < qrcode.size; y++) {
+    int runStart = -1;
+    for (uint8_t x = 0; x < qrcode.size; x++) {
+      bool isBlack = qrcode_getModule(&qrcode, x, y);
+
+      if (isBlack) {
+        if (runStart == -1) {
+          runStart = x; // Start a new run of black modules
+        }
+      } else {
+        if (runStart != -1) {
+          if (spanCount < 300) {
+            uint16_t xs = startX + runStart * moduleSize;
+            uint16_t ys = startY + y * moduleSize;
+            uint16_t xe = startX + x * moduleSize - 1;
+            uint16_t ye = ys + moduleSize - 1;
+
+            spansBuffer[spanCount++] = {xs, ys, xe, ye, COLOR_BLACK};
+          }
+          runStart = -1; // Reset run
+        }
+      }
+    }
+
+    // Draw run if it extends to the end of the row
+    if (runStart != -1) {
+      if (spanCount < 300) {
+        uint16_t xs = startX + runStart * moduleSize;
+        uint16_t ys = startY + y * moduleSize;
+        uint16_t xe = startX + qrcode.size * moduleSize - 1;
+        uint16_t ye = ys + moduleSize - 1;
+
+        spansBuffer[spanCount++] = {xs, ys, xe, ye, COLOR_BLACK};
+      }
+    }
+  }
+
+  Serial.print("[DEBUG] Matrix scanned. Spans calculated: ");
+  Serial.println(spanCount);
+
+  // Clear the drawing area to white first
+  dgusClearQrArea();
+  delay(80); // Give the DWIN controller time to clear the screen
+
+  // Draw all spans together via RAM buffering to prevent flicker and keep drawings persistent
+  dgusDrawRects(spansBuffer, spanCount);
+
+  Serial.println("[QR] DWIN manual rendering completed.");
 }
 
 // Clears the QR area and draws a loading progress bar inside the box

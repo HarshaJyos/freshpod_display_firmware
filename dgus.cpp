@@ -24,7 +24,9 @@ void dgusShowPage(uint8_t pageIndex) {
 }
 
 void dgusClearQrArea() {
-  dgusSetQrContent("");
+  // Clear the 200x200 drawing area with White
+  // Box coordinates: X: 312 -> 512, Y: 182 -> 382
+  dgusDrawFilledRect(312, 182, 512, 382, COLOR_WHITE);
 }
 
 void dgusDrawFilledRect(uint16_t xs, uint16_t ys, uint16_t xe, uint16_t ye, uint16_t color) {
