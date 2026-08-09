@@ -128,16 +128,16 @@ void dgusSetQrContent(const char *text) {
   }
 
   size_t len = strlen(text);
-  if (len > 120) return; // safety limit
+  if (len > 60) return; // safety limit
 
-  // We will write a fixed 120 bytes (60 words) to clear any previous data
-  uint8_t buffer[120];
-  memset(buffer, 0, sizeof(buffer));
+  // We will write a fixed 64 bytes (32 words) to clear any previous data and terminate with 0xFFFF
+  uint8_t buffer[64];
+  memset(buffer, 0xFF, sizeof(buffer)); // 0xFF acts as the DWIN string terminator
   if (len > 0) {
     memcpy(buffer, text, len);
   }
 
-  uint8_t payloadLen = 3 + 120; // 123 bytes follow length byte
+  uint8_t payloadLen = 3 + 64; // 67 bytes follow length byte
 
   dwinSerial->write(0x5A);
   dwinSerial->write(0xA5);
