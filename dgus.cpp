@@ -24,9 +24,7 @@ void dgusShowPage(uint8_t pageIndex) {
 }
 
 void dgusClearQrArea() {
-  // Clear the 250x250 drawing area with White
-  // Box coordinates: X: 275 -> 525, Y: 125 -> 375
-  dgusDrawFilledRect(275, 125, 525, 375, COLOR_WHITE);
+  dgusSetQrContent("");
 }
 
 void dgusDrawFilledRect(uint16_t xs, uint16_t ys, uint16_t xe, uint16_t ye, uint16_t color) {
@@ -123,14 +121,20 @@ void dgusDrawRects(const DGUSRect *rects, uint16_t count) {
 // NEW: Write string to native QR Code control
 // ============================================================
 void dgusSetQrContent(const char *text) {
-  if (dwinSerial == NULL || text == NULL) return;
+  if (dwinSerial == NULL) return;
+
+  if (text == NULL) {
+    text = "";
+  }
 
   size_t len = strlen(text);
-  if (len == 0 || len > 450) return;          // safety limit (DGUS supports up to ~458 bytes)
+  if (len > 450) return;          // safety limit (DGUS supports up to ~458 bytes)
 
-  // Frame: 5A A5 | Length | 82 | VP_H VP_L | ASCII data... | FF FF
-  // Length = 1 (cmd) + 2 (VP) + len + 2 (terminator)
-  uint8_t payloadLen = 3 + len + 2;
+  // Determine padding/terminator length to ensure even byte count for 16-bit VP memory.
+  // If len is even, we append 0x00 0x00 (2 bytes).
+  // If len is odd, we append 0x00 (1 byte).
+  uint8_t termLen = (len % 2 == 0) ? 2 : 1;
+  uint8_t payloadLen = 3 + len + termLen;
 
   dwinSerial->write(0x5A);
   dwinSerial->write(0xA5);
@@ -140,11 +144,14 @@ void dgusSetQrContent(const char *text) {
   dwinSerial->write((uint8_t)(DGUS_VP_QR_CONTENT & 0xFF));
 
   // Write the actual string
-  dwinSerial->write((const uint8_t *)text, len);
+  if (len > 0) {
+    dwinSerial->write((const uint8_t *)text, len);
+  }
 
-  // Terminator required by DGUS QR control
-  dwinSerial->write(0xFF);
-  dwinSerial->write(0xFF);
+  // Write null terminator (1 or 2 bytes) to align to 16-bit words
+  for (uint8_t i = 0; i < termLen; i++) {
+    dwinSerial->write(0x00);
+  }
 
   dwinSerial->flush();
 }
