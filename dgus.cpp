@@ -130,23 +130,49 @@ void dgusSetQrContent(const char *text) {
   size_t len = strlen(text);
   if (len > 60) return; // safety limit
 
-  // We will write a fixed 64 bytes (32 words) to clear any previous data and terminate with 0xFFFF
-  uint8_t buffer[64];
-  memset(buffer, 0xFF, sizeof(buffer)); // 0xFF acts as the DWIN string terminator
-  if (len > 0) {
-    memcpy(buffer, text, len);
+  // Format 1: Write with 2-byte length prefix (standard T5L Text display variable layout)
+  {
+    uint8_t buffer[64];
+    memset(buffer, 0x00, sizeof(buffer));
+    buffer[0] = 0x00;
+    buffer[1] = (uint8_t)len;
+    if (len > 0) {
+      memcpy(&buffer[2], text, len);
+    }
+
+    uint8_t payloadLen = 3 + 64; // 67 bytes
+
+    dwinSerial->write(0x5A);
+    dwinSerial->write(0xA5);
+    dwinSerial->write(payloadLen);
+    dwinSerial->write(DGUS_CMD_WRITE_VAR);
+    dwinSerial->write((uint8_t)(DGUS_VP_QR_CONTENT >> 8));
+    dwinSerial->write((uint8_t)(DGUS_VP_QR_CONTENT & 0xFF));
+    dwinSerial->write(buffer, sizeof(buffer));
+    dwinSerial->flush();
   }
 
-  uint8_t payloadLen = 3 + 64; // 67 bytes follow length byte
+  // Small delay for display processing
+  delay(20);
 
-  dwinSerial->write(0x5A);
-  dwinSerial->write(0xA5);
-  dwinSerial->write(payloadLen);
-  dwinSerial->write(DGUS_CMD_WRITE_VAR);
-  dwinSerial->write((uint8_t)(DGUS_VP_QR_CONTENT >> 8));
-  dwinSerial->write((uint8_t)(DGUS_VP_QR_CONTENT & 0xFF));
+  // Format 2: Write as raw ASCII terminated by 0xFFFF (alternate DWIN QR layout)
+  {
+    uint8_t buffer[64];
+    memset(buffer, 0xFF, sizeof(buffer));
+    if (len > 0) {
+      memcpy(buffer, text, len);
+    }
 
-  dwinSerial->write(buffer, sizeof(buffer));
-  dwinSerial->flush();
+    uint8_t payloadLen = 3 + 64; // 67 bytes
+
+    dwinSerial->write(0x5A);
+    dwinSerial->write(0xA5);
+    dwinSerial->write(payloadLen);
+    dwinSerial->write(DGUS_CMD_WRITE_VAR);
+    dwinSerial->write((uint8_t)(DGUS_VP_QR_CONTENT >> 8));
+    dwinSerial->write((uint8_t)(DGUS_VP_QR_CONTENT & 0xFF));
+    dwinSerial->write(buffer, sizeof(buffer));
+    dwinSerial->flush();
+  }
 }
 

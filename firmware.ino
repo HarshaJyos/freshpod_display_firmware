@@ -74,7 +74,7 @@ bool qrPrefetched = false;
 
 // Global objects
 DFPlayerMini_Fast myMP3;
-HardwareSerial dwinSerialPort(1);
+HardwareSerial dwinSerialPort(2);
 WiFiClientSecure secureClient;
 HTTPClient httpClient;
 
