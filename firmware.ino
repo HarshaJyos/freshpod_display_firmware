@@ -87,19 +87,19 @@ void connectWiFi();
 void dgusShowLoadingIndicator();
 
 void setup() {
+  // Initialize DWIN display and switch to welcome page immediately to prevent initial boot QR screen flash
+  dgusInit(dwinSerialPort, DWIN_RX_PIN, DWIN_TX_PIN, 115200);
+  delay(50);
+  dgusShowPage(PAGE_WELCOME);
+  delay(50);
+  dgusClearQrArea(); // Clear any persistent basic graphics overlay on boot
+  delay(50);
+
   Serial.begin(9600);
-  delay(1000);
   Serial.println("\n--- Freshpod ESP32 Boot Starting ---");
 
   // Set insecure mode on the global secure SSL client
   secureClient.setInsecure();
-
-  // Initialize DWIN display
-  dgusInit(dwinSerialPort, DWIN_RX_PIN, DWIN_TX_PIN, 115200);
-  delay(100);
-  dgusShowPage(
-      PAGE_WELCOME); // Show Welcome screen during initialization
-  delay(100);
 
   // Initialize DFPlayer
   if (!myMP3.begin(Serial)) {
@@ -210,15 +210,16 @@ void loop() {
     // Route state machine directly based on prefetch success
     stateTimer = millis();
     if (qrPrefetched) {
-      Serial.println("[LOOP] QR was pre-drawn successfully. Entering "
-                     "STATE_WAIT_FOR_PAYMENT directly.");
+      Serial.println("[LOOP] Drawing pre-fetched QR code and entering STATE_WAIT_FOR_PAYMENT.");
+      dgusShowPage(PAGE_QR_CODE);
+      dgusClearQrArea();
+      drawQRCode(currentUpiIntent.c_str());
       qrPrefetched = false; // Consume/reset prefetch flag
       paymentSuccessReceived = false;
       lastPollingTime = millis();
       currentState = STATE_WAIT_FOR_PAYMENT;
     } else {
-      Serial.println("[LOOP] QR prefetch failed. Fallback to requesting "
-                     "payment synchronously.");
+      Serial.println("[LOOP] QR prefetch failed. Fallback to requesting payment synchronously.");
       currentState = STATE_REQUEST_PAYMENT;
     }
     break;
@@ -452,6 +453,7 @@ void connectWiFi() {
 // Play out the full hardware sequence (preserved 100% from original code)
 void startCleaningProcess() {
   Serial.println("=== STARTING CLEANING PROCESS ===");
+  dgusClearQrArea(); // Clear out the QR drawing immediately when payment succeeds
 
   digitalWrite(BUZZER, HIGH);
   delay(500);
@@ -560,10 +562,7 @@ void startCleaningProcess() {
   if (requestNewPayment()) {
     qrPrefetched = true;
     Serial.println(
-        "[PREFETCH] Success! QR code prefetched. Pre-drawing onto Page 0...");
-    // Clear and draw the QR code on Page 0 in the background!
-    dgusClearQrArea();
-    drawQRCode(currentUpiIntent.c_str());
+        "[PREFETCH] Success! QR code prefetched (will draw when returning to QR page).");
   } else {
     qrPrefetched = false;
     Serial.println(
@@ -575,7 +574,6 @@ void startCleaningProcess() {
   Serial.println("=== CLEANING CYCLE COMPLETE ===");
   myMP3.play(TRACK_VISIT_AGAIN);
   delay(14000);
-  dgusShowPage(PAGE_QR_CODE);
 
   // Reset all relays to safe default
   digitalWrite(RELAY1, LOW);
