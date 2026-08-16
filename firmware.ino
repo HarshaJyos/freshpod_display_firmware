@@ -15,7 +15,7 @@
 
 // ===================== OTA CONFIG =====================
 #define CURRENT_VERSION_STR  "1.1.0"
-#define OTA_BASE_URL         "https://freshpod-ota-r3b9.onrender.com/firmware/"
+#define OTA_BASE_URL         "https://freshpod-backend-324161304253.us-central1.run.app/firmware/"
 // ======================================================
 
 #define WIFI_SSID          "Sushrut's iPhone"
